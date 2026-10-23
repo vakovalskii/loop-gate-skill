@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop guard: схема</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #121821; --panel2: #18202b; --line: #2a3441;
+    --text: #e8eef5; --muted: #8a97a8; --cyan: #3fd0dc; --green: #43d17a;
+    --amber: #f0b44a; --red: #ff6b6b; --violet: #a98bff;
+  }
+  html, body { margin: 0; background: var(--bg); }
+  body { display: flex; justify-content: center; padding: 24px 16px; }
+  svg { width: 100%; max-width: 1280px; height: auto; }
+  text { font-family: Inter, -apple-system, system-ui, sans-serif; fill: var(--text); }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .muted { fill: var(--muted); }
+  .t-cyan { fill: var(--cyan); } .t-green { fill: var(--green); } .t-amber { fill: var(--amber); }
+  .t-red { fill: var(--red); } .t-violet { fill: var(--violet); }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1280 1090" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема работы loop guard">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a97a8"/>
+    </marker>
+    <marker id="arC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3fd0dc"/>
+    </marker>
+    <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff6b6b"/>
+    </marker>
+    <linearGradient id="gate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#103038"/><stop offset="1" stop-color="#0f1f2b"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="1090" fill="#0b0f14"/>
+
+  <!-- Заголовок -->
+  <text x="40" y="52" font-size="30" font-weight="800">Loop guard: рвём циклы генерации, не трогая движок</text>
+  <text x="40" y="80" font-size="15" class="muted">lane-gate на Go между шлюзом и vLLM · две реплики · боевой режим с 06.10.26 · qwen3.6-35b-a3b, qwen3.8-27b</text>
+
+  <!-- Верхний ряд: путь запроса -->
+  <g font-size="15">
+    <rect x="40" y="110" width="190" height="84" rx="14" fill="#121821" stroke="#2a3441"/>
+    <text x="135" y="146" text-anchor="middle" font-weight="700" font-size="17">Клиент</text>
+    <text x="135" y="170" text-anchor="middle" class="muted" font-size="13">агент, IDE, бот</text>
+
+    <rect x="300" y="110" width="200" height="84" rx="14" fill="#121821" stroke="#2a3441"/>
+    <text x="400" y="146" text-anchor="middle" font-weight="700" font-size="17">Шлюз litellm</text>
+    <text x="400" y="170" text-anchor="middle" class="muted" font-size="13">ключи, лимиты, учёт</text>
+
+    <rect x="570" y="102" width="240" height="100" rx="16" fill="url(#gate)" stroke="#3fd0dc" stroke-width="2" filter="url(#glow)"/>
+    <text x="690" y="142" text-anchor="middle" font-weight="800" font-size="20" class="t-cyan">lane-gate</text>
+    <text x="690" y="168" text-anchor="middle" font-size="13" class="muted">Go, без зависимостей</text>
+    <text x="690" y="186" text-anchor="middle" font-size="13" class="muted">реплики a и b</text>
+
+    <rect x="880" y="110" width="160" height="84" rx="14" fill="#121821" stroke="#2a3441"/>
+    <text x="960" y="146" text-anchor="middle" font-weight="700" font-size="17">vllm-router</text>
+    <text x="960" y="170" text-anchor="middle" class="muted" font-size="13">кеш префиксов</text>
+
+    <rect x="1080" y="110" width="160" height="84" rx="14" fill="#121821" stroke="#2a3441"/>
+    <text x="1160" y="146" text-anchor="middle" font-weight="700" font-size="17">vLLM</text>
+    <text x="1160" y="170" text-anchor="middle" class="muted" font-size="13">движок не трогаем</text>
+  </g>
+  <g stroke="#8a97a8" stroke-width="1.6" fill="none">
+    <line x1="232" y1="152" x2="296" y2="152" marker-end="url(#ar)"/>
+    <line x1="502" y1="152" x2="566" y2="152" marker-end="url(#ar)"/>
+    <line x1="812" y1="140" x2="876" y2="140" stroke="#3fd0dc" marker-end="url(#arC)"/>
+    <line x1="876" y1="166" x2="812" y2="166" stroke-dasharray="4 4" marker-end="url(#ar)"/>
+    <line x1="1042" y1="152" x2="1076" y2="152" marker-end="url(#ar)"/>
+  </g>
+  <text x="844" y="132" text-anchor="middle" font-size="11" class="t-cyan mono">stream</text>
+  <text x="844" y="184" text-anchor="middle" font-size="11" class="muted mono">SSE</text>
+  <text x="534" y="226" text-anchor="middle" font-size="12" class="muted">обрыв клиента</text>
+  <text x="534" y="242" text-anchor="middle" font-size="12" class="muted">снимает генерацию</text>
+
+  <!-- Панель: внутри гейта -->
+  <rect x="40" y="262" width="1200" height="560" rx="20" fill="#0f141b" stroke="#22303c"/>
+  <text x="70" y="298" font-size="13" font-weight="700" letter-spacing="2" class="t-cyan">ВНУТРИ LANE-GATE</text>
+
+  <!-- 1. Принудительный стрим -->
+  <rect x="70" y="318" width="340" height="150" rx="14" fill="#121821" stroke="#2a3441"/>
+  <circle cx="98" cy="346" r="14" fill="#3fd0dc"/><text x="98" y="351" text-anchor="middle" font-size="14" font-weight="800" fill="#0b0f14">1</text>
+  <text x="122" y="352" font-size="17" font-weight="700">Всё в стрим</text>
+  <text x="90" y="384" font-size="14"><tspan class="mono t-amber">stream:false</tspan><tspan class="muted"> → движку </tspan><tspan class="mono t-cyan">stream:true</tspan></text>
+  <text x="90" y="408" font-size="14" class="muted">+ include_usage, порядок полей цел</text>
+  <text x="90" y="432" font-size="14" class="muted">клиенту склеиваем обычный</text>
+  <text x="90" y="452" font-size="14" class="muted">chat.completion с tool_calls и usage</text>
+
+  <!-- 2. Детектор -->
+  <rect x="440" y="318" width="400" height="150" rx="14" fill="#121821" stroke="#2a3441"/>
+  <circle cx="468" cy="346" r="14" fill="#3fd0dc"/><text x="468" y="351" text-anchor="middle" font-size="14" font-weight="800" fill="#0b0f14">2</text>
+  <text x="492" y="352" font-size="17" font-weight="700">Детектор по ходу стрима</text>
+  <text x="460" y="384" font-size="14" class="muted">куски по <tspan class="t-text" fill="#e8eef5" font-weight="600">32 слова</tspan>, кольцевой хеш, O(1) на слово</text>
+  <text x="460" y="408" font-size="14" class="muted">взвод после <tspan fill="#e8eef5" font-weight="600">3000 слов</tspan></text>
+  <text x="460" y="432" font-size="14" class="muted">content и reasoning отдельно</text>
+  <text x="460" y="452" font-size="14" class="muted">аргументы инструментов не считаем</text>
+
+  <!-- 3. Решение -->
+  <polygon points="1040,318 1170,393 1040,468 910,393" fill="#1a1320" stroke="#a98bff" stroke-width="2"/>
+  <text x="1040" y="384" text-anchor="middle" font-size="16" font-weight="800" class="t-violet">Цикл?</text>
+  <text x="1040" y="404" text-anchor="middle" font-size="12" class="muted">кусок ≥ 5 раз</text>
+  <text x="1040" y="420" text-anchor="middle" font-size="12" class="muted">и повтор ≥ 35%</text>
+
+  <g stroke="#8a97a8" stroke-width="1.6" fill="none">
+    <line x1="412" y1="393" x2="436" y2="393" marker-end="url(#ar)"/>
+    <line x1="842" y1="393" x2="906" y2="393" marker-end="url(#ar)"/>
+  </g>
+  <!-- нет -->
+  <line x1="1170" y1="393" x2="1228" y2="393" stroke="#43d17a" stroke-width="1.6"/>
+  <path d="M1222,387 L1232,393 L1222,399 z" fill="#43d17a"/>
+  <text x="1182" y="382" font-size="13" font-weight="700" class="t-green">нет</text>
+  <text x="1178" y="416" font-size="11" class="muted">ответ</text>
+  <text x="1178" y="430" font-size="11" class="muted">как есть</text>
+
+  <!-- да: шина -->
+  <path d="M1040,468 V500 H250 V520 M640,500 V520 M1040,500 V520" stroke="#ff6b6b" stroke-width="1.8" fill="none"/>
+  <text x="1052" y="492" font-size="13" font-weight="700" class="t-red">да</text>
+  <g fill="#ff6b6b"><path d="M244,514 L250,524 L256,514 z"/><path d="M634,514 L640,524 L646,514 z"/><path d="M1034,514 L1040,524 L1046,514 z"/></g>
+
+  <!-- A -->
+  <rect x="70" y="526" width="360" height="172" rx="14" fill="#121821" stroke="#43d17a" stroke-opacity=".6"/>
+  <text x="90" y="556" font-size="13" font-weight="700" letter-spacing="1" class="t-green">КЛИЕНТ БЕЗ СТРИМА</text>
+  <text x="90" y="584" font-size="16" font-weight="700">Рвём и тихо перезапускаем</text>
+  <text x="90" y="610" font-size="14" class="muted">новый <tspan class="mono" fill="#e8eef5">seed</tspan>, <tspan class="mono" fill="#e8eef5">presence_penalty</tspan> 1.0 → 1.5</text>
+  <text x="90" y="632" font-size="14" class="muted">до 3 попыток, не позже 600 с</text>
+  <text x="90" y="654" font-size="14" class="muted">клиент ничего не замечает</text>
+  <text x="90" y="680" font-size="12" class="muted">repetition_penalty не трогаем</text>
+
+  <!-- B -->
+  <rect x="460" y="526" width="360" height="172" rx="14" fill="#121821" stroke="#f0b44a" stroke-opacity=".6"/>
+  <text x="480" y="556" font-size="13" font-weight="700" letter-spacing="1" class="t-amber">СТРИМ, ЦИКЛ В РАССУЖДЕНИЯХ</text>
+  <text x="480" y="584" font-size="16" font-weight="700">Тот же стрим, новая попытка</text>
+  <text x="480" y="610" font-size="14" class="muted">ответ ещё не начался, поэтому</text>
+  <text x="480" y="632" font-size="14" class="muted">клиент продолжает читать стрим</text>
+  <text x="480" y="654" font-size="14" class="muted">из новой попытки</text>
+  <text x="480" y="680" font-size="12" class="muted">в рассуждениях остаётся кусок мусора</text>
+
+  <!-- C -->
+  <rect x="850" y="526" width="360" height="172" rx="14" fill="#121821" stroke="#ff6b6b" stroke-opacity=".6"/>
+  <text x="870" y="556" font-size="13" font-weight="700" letter-spacing="1" class="t-red">СТРИМ, ЦИКЛ В ОТВЕТЕ</text>
+  <text x="870" y="584" font-size="16" font-weight="700">Обрезок</text>
+  <text x="870" y="610" font-size="14" class="muted">клиент уже читает текст,</text>
+  <text x="870" y="632" font-size="14" class="muted">перезапуск не спрятать</text>
+  <text x="870" y="654" font-size="14"><tspan class="muted">закрываем с </tspan><tspan class="mono t-amber">finish_reason: length</tspan></text>
+  <text x="870" y="680" font-size="12" class="muted">как при упоре в max_tokens</text>
+
+  <!-- исходы A -->
+  <rect x="70" y="716" width="555" height="44" rx="22" fill="#10261a" stroke="#43d17a" stroke-opacity=".5"/>
+  <text x="92" y="744" font-size="14"><tspan class="t-green" font-weight="800">✓ 3094 запроса вылечились</tspan><tspan class="muted"> · 92% с первой же попытки</tspan></text>
+  <rect x="640" y="716" width="570" height="44" rx="22" fill="#2a1f0e" stroke="#f0b44a" stroke-opacity=".5"/>
+  <text x="662" y="744" font-size="14"><tspan class="t-amber" font-weight="800">попытки кончились</tspan><tspan class="muted"> → отдаём лучшую из попыток с length</tspan></text>
+  <text x="70" y="796" font-size="13" class="muted">Без стрима проходит 3189 из 3934 оборванных попыток (81%), для них перезапуск невидим</text>
+
+  <!-- Наблюдаемость -->
+  <text x="40" y="866" font-size="13" font-weight="700" letter-spacing="2" class="muted">ЧТО ВИДНО ДЕЖУРНЫМ</text>
+  <g font-size="14">
+    <rect x="40" y="880" width="280" height="64" rx="12" fill="#121821" stroke="#2a3441"/>
+    <text x="58" y="907" font-weight="700">Redis → сводка 15 мин</text>
+    <text x="58" y="928" class="muted" font-size="13">в Telegram, тема ALERTS</text>
+    <rect x="340" y="880" width="280" height="64" rx="12" fill="#121821" stroke="#2a3441"/>
+    <text x="358" y="907" font-weight="700">Архив сработок jsonl</text>
+    <text x="358" y="928" class="muted" font-size="13">только цифры, без текста</text>
+    <rect x="640" y="880" width="290" height="64" rx="12" fill="#121821" stroke="#2a3441"/>
+    <text x="658" y="907" font-weight="700">Тела оборванных попыток</text>
+    <text x="658" y="928" class="muted" font-size="13">только у включивших логи, 30 дней</text>
+    <rect x="950" y="880" width="290" height="64" rx="12" fill="#121821" stroke="#2a3441"/>
+    <text x="968" y="907" font-weight="700">Prometheus → Grafana</text>
+    <text x="968" y="928" class="muted" font-size="13">retried · recovered · cut</text>
+  </g>
+
+  <!-- Цифры -->
+  <g>
+    <rect x="40" y="968" width="1200" height="96" rx="18" fill="#121821" stroke="#22303c"/>
+    <text x="70" y="1010" font-size="26" font-weight="800"><tspan class="t-red">5.8 млн</tspan><tspan class="muted" font-size="20"> → </tspan><tspan class="t-green">~30 тыс.</tspan></text>
+    <text x="70" y="1038" font-size="13" class="muted">токенов мусора в сутки после поимки цикла</text>
+    <text x="420" y="1010" font-size="26" font-weight="800" class="t-cyan">≈ 10%</text>
+    <text x="420" y="1038" font-size="13" class="muted">генерации лейна раньше уходило в циклы</text>
+    <text x="720" y="1010" font-size="26" font-weight="800" class="t-amber">202</text>
+    <text x="720" y="1038" font-size="13" class="muted">обрезка за 16 дней</text>
+    <text x="930" y="1010" font-size="26" font-weight="800" class="t-green">0 из 510</text>
+    <text x="930" y="1038" font-size="13" class="muted">ложных срабатываний на JSON-схемах</text>
+  </g>
+</svg>
+</body>
+</html>
